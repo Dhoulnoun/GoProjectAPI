@@ -13,13 +13,24 @@ type sensor struct {
 	MEASUREDATE  string `json:"measuredate"`
 }
 
-type sensors []sensor
-
 func (s *sensor) getSensor(client *redis.Client) error {
 	return client.Get(context.Background(), "sensor:"+s.ID).Scan(s)
 }
 
-func (s *sensor) getSensors(client *redis.Client, start, count int) ([]string, uint64) {
-	rows, err, _ := client.Scan(context.Background(), uint64(start), "sensor:*", int64(uint64(count))).Result()
-	return rows, err
+func getSensors(client *redis.Client) ([]sensor, error) {
+	var sensors []sensor
+	ctx := context.Background()
+	keys, err := client.Keys(ctx, "sensor:*").Result()
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range keys {
+		var s sensor
+		err = client.Get(ctx, key).Scan(&s)
+		if err != nil {
+			return nil, err
+		}
+		sensors = append(sensors, s)
+	}
+	return sensors, nil
 }
