@@ -1,4 +1,4 @@
-package GoProjectAPI
+package main
 
 import (
 	"context"
